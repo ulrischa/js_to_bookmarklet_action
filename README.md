@@ -29,7 +29,7 @@ jobs:
     
     steps:
       - name: Use Bookmarklet Generator
-        uses: ulrischa/bookmarklet-generator@v1.0.0
+        uses: ulrischa/js_to_bookmarklet_action@v1.0.0
         with:
           source_js_file: 'src/bookmarklet.js'
           target_html_file: 'index.html'
