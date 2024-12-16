@@ -13,7 +13,7 @@ Use this if you want to host a bookmarklet install html page on github pages. Yo
 
 ## Usage
 
-** VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
+**VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
 
 To use this Action, add it to your workflow file:
 
