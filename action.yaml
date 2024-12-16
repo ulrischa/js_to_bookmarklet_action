@@ -82,4 +82,3 @@ runs:
         git diff-index --quiet HEAD || git commit -m "${{ inputs.commit_message }}"
         git push
       shell: bash
-
