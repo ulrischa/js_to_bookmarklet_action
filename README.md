@@ -13,29 +13,41 @@ Use this if you want to host a bookmarklet install html page on github pages. Yo
 
 ## Usage
 
+** VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
+
 To use this Action, add it to your workflow file:
 
 ```yaml
-name: Use Bookmarklet Generator
+name: Test Bookmarklet Generator
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'src/bookmarklet.js'
+      - 'raw_js_file.js'
 
 jobs:
-  generate-bookmarklet:
+  bookmarklet-job:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Use Bookmarklet Generator
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Bookmarklet Generator Action
         uses: ulrischa/js_to_bookmarklet_action@v1
         with:
-          source_js_file: 'src/bookmarklet.js'
-          target_html_file: 'index.html'
+          source_js_file: 'raw_js_file.js'
+          target_html_file: 'install_page.htm'
           target_element_id: 'target'
           commit_message: 'Update bookmarklet link'
+
+      - name: Debug Files and Environment
+        run: |
+          ls -la .
+          cat raw_js_file.js
+          cat install_page.htm
+        shell: bash
 
 
