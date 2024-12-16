@@ -14,10 +14,12 @@ Use this if you want to host a bookmarklet install html page on github pages. Yo
 ## Usage
 
 **VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
+
 ![actions](https://github.com/user-attachments/assets/7a9135e0-1a2e-4658-8bca-f6bf757c800e)
 
 
 Configure your repo as hosting for github pages. So your target html file can be reached online
+
 ![pages](https://github.com/user-attachments/assets/6c51c40b-7d0f-41c4-8543-618620af2cae)
 
 
