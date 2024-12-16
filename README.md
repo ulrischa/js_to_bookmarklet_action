@@ -18,7 +18,7 @@ Use this if you want to host a bookmarklet install html page on github pages. Yo
 ![actions](https://github.com/user-attachments/assets/7a9135e0-1a2e-4658-8bca-f6bf757c800e)
 
 
-To use this Action, add it to your workflow file:
+To use this Action, add it to your workflow file. And change the path to your disired files and the selector in the html
 
 ```yaml
 name: Test Bookmarklet Generator
@@ -58,6 +58,7 @@ jobs:
 If you wish to automatically publish the html page as github page and use it as a install page, activate github pages:
 
 Configure your repo as hosting for github pages. So your target html file can be reached online. Use Github Actions for this
+
 ![pages](https://github.com/user-attachments/assets/acc98043-f189-4e5a-8a85-11871cf73bd4)
 
 Then you must change the git hub pages static.yaml action file, so that it runs after the bookmarklet conversion. Let's say you named the bookmarklet conversion action "Test Bookmarklet Generator". Then cnage the on trigger to:
