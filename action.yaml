@@ -1,0 +1,95 @@
+name: Bookmarklet Generator
+
+env:
+  # Quell-JavaScript Datei (nur für Skript-Verwendung, nicht für Trigger)
+  SOURCE_JS_FILE: 'your_js.js'
+  # Ziel-HTML Datei
+  TARGET_HTML_FILE: 'index.htm'
+  # ID des Link-Elements in der HTML-Datei
+  TARGET_ELEMENT_ID: 'target'
+  # Git Commit Nachricht
+  COMMIT_MESSAGE: 'Update bookmarklet link'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'your_js.js'
+
+jobs:
+  generate-bookmarklet:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Create Bookmarklet
+        run: |
+          # Überprüfen, ob Dateien existieren
+          if [ ! -f "${{ env.SOURCE_JS_FILE }}" ]; then
+            echo "Source file not found: ${{ env.SOURCE_JS_FILE }}"
+            exit 1
+          fi
+          
+          if [ ! -f "${{ env.TARGET_HTML_FILE }}" ]; then
+            echo "Target HTML file not found: ${{ env.TARGET_HTML_FILE }}"
+            exit 1
+          fi
+
+          # Node.js Skript ausführen
+          node << 'EOF'
+            const fs = require('fs');
+            const path = require('path');
+
+            // Dateien und Umgebungsvariablen laden
+            const sourceFile = process.env.SOURCE_JS_FILE;
+            const targetFile = process.env.TARGET_HTML_FILE;
+            const targetElementId = process.env.TARGET_ELEMENT_ID;
+
+            try {
+              // JavaScript-Code einlesen
+              const jsContent = fs.readFileSync(sourceFile, 'utf-8').trim();
+
+              // IIFE-Check und Wrapping
+              let processedCode = jsContent;
+              if (!jsContent.startsWith('(function') && !jsContent.startsWith('(() =>')) {
+                processedCode = `(function(){${jsContent}})();`;
+              }
+
+              // Bookmarklet erstellen
+              const bookmarklet = 'javascript:' + encodeURIComponent(processedCode);
+
+              // HTML-Datei einlesen
+              const html = fs.readFileSync(targetFile, 'utf-8');
+
+              // HTML aktualisieren
+              const updatedHtml = html.replace(
+                new RegExp(`<a[^>]+id="${targetElementId}"[^>]*href="[^"]*"`, 'i'),
+                `<a id="${targetElementId}" href="${bookmarklet}"`
+              );
+
+              // Änderungen speichern
+              fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
+              console.log(`Bookmarklet erfolgreich erstellt und in ${targetFile} eingefügt.`);
+            } catch (error) {
+              console.error('Fehler beim Verarbeiten der Dateien:', error);
+              process.exit(1);
+            }
+          EOF
+          
+      - name: Commit und Push der Änderungen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.TARGET_HTML_FILE }}
+          git diff-index --quiet HEAD || git commit -m "${{ env.COMMIT_MESSAGE }}"
+          git push
+
+permissions:
+  contents: write
