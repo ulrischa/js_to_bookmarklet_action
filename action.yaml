@@ -1,68 +1,84 @@
-name: Bookmarklet Generator
-description: Automatically generates a bookmarklet link from JavaScript and updates a target HTML file.
-author: Your Name <your-email@example.com>
+name: "Bookmarklet Generator"
+description: "Automatically generates a JavaScript bookmarklet and updates an HTML file with the bookmarklet link."
+author: "Your Name or Organization"
+branding:
+  color: "blue"
+  icon: "link"
+
 inputs:
-  source-js-file:
-    description: Path to the source JavaScript file.
-    required: true
-    default: src/bookmarklet.js
-  target-html-file:
-    description: Path to the target HTML file where the bookmarklet link is updated.
-    required: true
-    default: index.html
-  target-element-id:
-    description: ID of the link element in the target HTML file to update.
-    required: true
-    default: target
-  commit-message:
-    description: Commit message for the update.
-    required: true
-    default: Update bookmarklet link
-outputs: {}
+  source_js_file:
+    description: "Path to the source JavaScript file used for creating the bookmarklet."
+    required: false
+    default: "src/bookmarklet.js"
+  target_html_file:
+    description: "Path to the target HTML file where the bookmarklet link will be updated."
+    required: false
+    default: "index.html"
+  target_element_id:
+    description: "ID of the link element in the target HTML file."
+    required: false
+    default: "target"
+  commit_message:
+    description: "Git commit message for the updated HTML file."
+    required: false
+    default: "Update bookmarklet link"
+
 runs:
   using: "composite"
   steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Generate Bookmarklet
+    - name: Check if source file exists
       run: |
-        if [ ! -f "${{ inputs.source-js-file }}" ]; then
-          echo "Source file not found: ${{ inputs.source-js-file }}"
+        if [ ! -f "${{ inputs.source_js_file }}" ]; then
+          echo "Source file not found: ${{ inputs.source_js_file }}"
           exit 1
         fi
-        if [ ! -f "${{ inputs.target-html-file }}" ]; then
-          echo "Target HTML file not found: ${{ inputs.target-html-file }}"
+      shell: bash
+
+    - name: Check if target file exists
+      run: |
+        if [ ! -f "${{ inputs.target_html_file }}" ]; then
+          echo "Target HTML file not found: ${{ inputs.target_html_file }}"
           exit 1
         fi
+      shell: bash
+
+    - name: Execute Node.js script to generate bookmarklet
+      run: |
         node << 'EOF'
           const fs = require('fs');
-          const sourceFile = process.env.SOURCE_JS_FILE || '${{ inputs.source-js-file }}';
-          const targetFile = process.env.TARGET_HTML_FILE || '${{ inputs.target-html-file }}';
-          const targetElementId = process.env.TARGET_ELEMENT_ID || '${{ inputs.target-element-id }}';
+          const sourceFile = "${{ inputs.source_js_file }}";
+          const targetFile = "${{ inputs.target_html_file }}";
+          const targetElementId = "${{ inputs.target_element_id }}";
 
-          const jsContent = fs.readFileSync(sourceFile, 'utf-8').trim();
-          let processedCode = jsContent.startsWith('(function') ? jsContent : `(function(){${jsContent}})();`;
-          const bookmarklet = 'javascript:' + encodeURIComponent(processedCode);
+          try {
+            const jsContent = fs.readFileSync(sourceFile, 'utf-8').trim();
+            let processedCode = jsContent;
+            if (!jsContent.startsWith('(function') && !jsContent.startsWith('(() =>')) {
+              processedCode = `(function(){${jsContent}})();`;
+            }
 
-          const html = fs.readFileSync(targetFile, 'utf-8');
-          const updatedHtml = html.replace(
-            new RegExp(`<a[^>]+id="${targetElementId}"[^>]*href="[^"]*"`, 'i'),
-            `<a id="${targetElementId}" href="${bookmarklet}"`
-          );
+            const bookmarklet = 'javascript:' + encodeURIComponent(processedCode);
+            const html = fs.readFileSync(targetFile, 'utf-8');
 
-          fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
+            const updatedHtml = html.replace(
+              new RegExp(`<a[^>]+id="${targetElementId}"[^>]*href="[^"]*"`, 'i'),
+              `<a id="${targetElementId}" href="${bookmarklet}"`
+            );
+
+            fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
+            console.log(`Bookmarklet successfully created and added to ${targetFile}.`);
+          } catch (error) {
+            console.error('Error processing files:', error);
+            process.exit(1);
+          }
         EOF
+      shell: bash
 
     - name: Commit and Push Changes
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add ${{ inputs.target-html-file }}
-        git diff-index --quiet HEAD || git commit -m "${{ inputs.commit-message }}"
+        git add "${{ inputs.target_html_file }}"
+        git diff-index --quiet HEAD || git commit -m "${{ inputs.commit_message }}"
         git push
-branding:
-  icon: bookmark
-  color: blue
+      shell: bash
