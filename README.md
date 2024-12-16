@@ -15,6 +15,8 @@ Use this if you want to host a bookmarklet install html page on github pages. Yo
 
 **VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
 
+Configure your repo as hosting for github pages. So your target html file can be reached online
+
 To use this Action, add it to your workflow file:
 
 ```yaml
