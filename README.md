@@ -1,5 +1,4 @@
 # Bookmarklet Generator Action
-
 This GitHub Action generates a JavaScript bookmarklet from a source file and updates a specified HTML file with the bookmarklet link.
 It takes a js file in your github repo and inserts the converted bookmarklet code for an a href tag in a html file in same repo. You must define the js file, the target html file and the target id for inserting the bookmarklet code
 
