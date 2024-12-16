@@ -9,6 +9,9 @@ It takes a js file in your github repo and inserts the converted bookmarklet cod
 - Updates an HTML file by replacing the `href` of a specific link element.
 - Automatically commits and pushes the changes to the repository.
 
+## For What?
+Use this if you want to host a bookmarklet install html page on github pages. You can work with your JS and push it as usual.
+
 ## Usage
 
 To use this Action, add it to your workflow file:
