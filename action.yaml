@@ -1,6 +1,6 @@
 name: "Bookmarklet Generator"
 description: "Automatically generates a JavaScript bookmarklet and updates an HTML file with the bookmarklet link."
-author: "Your Name or Organization"
+author: "Ulrischa.de"
 branding:
   color: "blue"
   icon: "link"
