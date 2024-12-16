@@ -1,6 +1,6 @@
 name: "Bookmarklet Generator"
 description: "Automatically generates a JavaScript bookmarklet and updates an HTML file with the bookmarklet link."
-author: "Ulrischa.de"
+author: "Your Name or Organization"
 branding:
   color: "blue"
   icon: "link"
@@ -82,3 +82,4 @@ runs:
         git diff-index --quiet HEAD || git commit -m "${{ inputs.commit_message }}"
         git push
       shell: bash
+
