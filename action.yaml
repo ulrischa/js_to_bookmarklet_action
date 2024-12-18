@@ -64,7 +64,10 @@ runs:
               processedCode = `(function(){${jsContent}})();`;
             }
 
-            const minifiedCode = uglifyJS.minify(processedCode).code;
+            const minifiedCode = uglifyJS.minify(processedCode, {
+              compress: true,
+              mangle: true
+            }).code;
             const bookmarklet = 'javascript:' + encodeURIComponent(minifiedCode);
             const html = fs.readFileSync(targetFile, 'utf-8');
 
