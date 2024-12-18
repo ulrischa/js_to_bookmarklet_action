@@ -92,10 +92,8 @@ runs:
             const html = fs.readFileSync(targetFile, 'utf-8');
 
             // Replace the href attribute of the link with the generated bookmarklet
-            const updatedHtml = html.replace(
-              new RegExp(`<a([^>]+id="${targetElementId}"[^>]*)href="[^"]*"`, 'i'),
-              `<a$1href="${bookmarklet}"`
-            );
+            const regex = new RegExp(`(<a[^>]*id="${targetElementId}"[^>]*href=")[^"]*(")`, 'i');
+            const updatedHtml = html.replace(regex, `$1${bookmarklet}$2`);
 
             fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
             console.log(`Bookmarklet successfully created and added to ${targetFile}.`);
