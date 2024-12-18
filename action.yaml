@@ -58,25 +58,43 @@ runs:
           const targetElementId = "${{ inputs.target_element_id }}";
 
           try {
+            // Read and prepare the JS content
             const jsContent = fs.readFileSync(sourceFile, 'utf-8').trim();
             let processedCode = jsContent;
-            if (!jsContent.startsWith('(function') && !jsContent.startsWith('(() =>')) {
-              processedCode = `(function(){${jsContent}})();`;
+            if (!processedCode.startsWith('(function') && !processedCode.startsWith('(() =>')) {
+              processedCode = `(function(){${processedCode}})();`;
             }
 
-            const minifiedCode = uglifyJS.minify(processedCode, {
+            // Minify code
+            const minified = uglifyJS.minify(processedCode, {
               compress: true,
               mangle: true
-            }).code;
+            });
 
-            const safeMinifiedCode = minifiedCode.replace(/'/g, '&#39;');
-            const bookmarklet = 'javascript:' + safeMinifiedCode;
-            
+            if (minified.error) {
+              console.error("UglifyJS error:", minified.error);
+              process.exit(1);
+            }
+
+            let singleLineCode = minified.code;
+            // Remove any extraneous newlines
+            singleLineCode = singleLineCode.replace(/\r?\n/g, ' ');
+
+            // Escape characters that break HTML attributes
+            singleLineCode = singleLineCode
+              .replace(/&/g, '&amp;')
+              .replace(/"/g, '&quot;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+
+            const bookmarklet = 'javascript:' + singleLineCode;
+
             const html = fs.readFileSync(targetFile, 'utf-8');
 
+            // Replace the href attribute of the link with the generated bookmarklet
             const updatedHtml = html.replace(
-              new RegExp(`<a[^>]+id="${targetElementId}"[^>]*href="[^"]*"`, 'i'),
-              `<a id="${targetElementId}" href='${bookmarklet}'`
+              new RegExp(`<a([^>]+id="${targetElementId}"[^>]*)href="[^"]*"`, 'i'),
+              `<a$1href="${bookmarklet}"`
             );
 
             fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
