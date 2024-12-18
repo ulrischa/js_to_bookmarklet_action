@@ -69,14 +69,14 @@ runs:
               mangle: true
             }).code;
 
-            const safeMinifiedCode = minifiedCode.replace(/"/g, '&quot;');
+            const safeMinifiedCode = minifiedCode.replace(/'/g, '&#39;');
             const bookmarklet = 'javascript:' + safeMinifiedCode;
             
             const html = fs.readFileSync(targetFile, 'utf-8');
 
             const updatedHtml = html.replace(
               new RegExp(`<a[^>]+id="${targetElementId}"[^>]*href="[^"]*"`, 'i'),
-              `<a id="${targetElementId}" href="${bookmarklet}"`
+              `<a id="${targetElementId}" href='${bookmarklet}'`
             );
 
             fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
