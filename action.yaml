@@ -5,6 +5,7 @@ branding:
   color: "blue"
   icon: "link"
 
+
 inputs:
   source_js_file:
     description: "Path to the source JavaScript file used for creating the bookmarklet."
@@ -42,10 +43,16 @@ runs:
         fi
       shell: bash
 
+    - name: Install UglifyJS
+      run: |
+        npm install uglify-js
+      shell: bash
+
     - name: Execute Node.js script to generate bookmarklet
       run: |
         node << 'EOF'
           const fs = require('fs');
+          const uglifyJS = require('uglify-js');
           const sourceFile = "${{ inputs.source_js_file }}";
           const targetFile = "${{ inputs.target_html_file }}";
           const targetElementId = "${{ inputs.target_element_id }}";
@@ -57,7 +64,8 @@ runs:
               processedCode = `(function(){${jsContent}})();`;
             }
 
-            const bookmarklet = 'javascript:' + encodeURIComponent(processedCode);
+            const minifiedCode = uglifyJS.minify(processedCode).code;
+            const bookmarklet = 'javascript:' + encodeURIComponent(minifiedCode);
             const html = fs.readFileSync(targetFile, 'utf-8');
 
             const updatedHtml = html.replace(
