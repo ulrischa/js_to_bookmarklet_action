@@ -10,7 +10,7 @@ Create a repository from this template, edit `src/bookmarklet.js` and push to th
 
 The generated page takes its heading and browser title from the repository name. You may customize its text and layout. Subsequent runs update the link and the title and heading marked with `data-repo-name`. Remove that marker to keep a custom title. Keep one anchor with the configured ID and an href attribute.
 
-The build job needs permission to push to the default branch. If Pages is disabled, the build can still create the file, but deployment will fail until Pages is enabled.
+The build job needs permission to push to the default branch. When Pages is disabled or uses branch publishing, the build generates the file and skips deployment. Select **GitHub Actions** as the Pages source and rerun **Build bookmarklet** to publish. The included workflow handles deployment; an additional static-site workflow would compete with it.
 
 ## Use the action in another workflow
 
