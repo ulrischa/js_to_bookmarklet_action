@@ -1,73 +1,27 @@
-# Bookmarklet Generator Action
-This GitHub Action generates a JavaScript bookmarklet from a source file and updates a specified HTML file with the bookmarklet link.
-It takes a js file in your github repo and inserts the converted bookmarklet code for an a href tag in a html file in same repo. You must define the js file, the target html file and the target id for inserting the bookmarklet code
+# Bookmarklet Generator
 
-## Features
-- Reads a JavaScript file and wraps it in an IIFE if needed.
-- Encodes the script as a bookmarklet.
-- Updates an HTML file by replacing the `href` of a specific link element.
-- Automatically commits and pushes the changes to the repository.
+Create a repository from this template, edit `src/bookmarklet.js` and push to the default branch. The starter bookmarklet displays the current page title. Supply plain JavaScript without a `javascript:` prefix.
 
-## For What?
-Use this if you want to host a bookmarklet install html page on github pages. You can work with your JS and push it as usual.
+## Installation page
 
-## Usage
+1. In the new repository, select **Settings → Pages → Build and deployment → Source → GitHub Actions**.
+2. Push your script or select **Actions → Build bookmarklet → Run workflow** on the default branch.
+3. The workflow commits `index.htm` and publishes it as the Pages home page. The deployment job shows the published URL. Drag **Install bookmarklet** to your bookmarks bar and use it on the desired page.
 
-**VERY IMPORTANT: YOU NEED TO GIVE THE WORKFLOW READ AND WRITE PERMISSIONS**
+The generated page takes its heading and browser title from the repository name. You may customize its text and layout. Subsequent runs update the link and the title and heading marked with `data-repo-name`. Remove that marker to keep a custom title. Keep one anchor with the configured ID and an href attribute.
 
-![actions](https://github.com/user-attachments/assets/7a9135e0-1a2e-4658-8bca-f6bf757c800e)
+The build job needs permission to push to the default branch. If Pages is disabled, the build can still create the file, but deployment will fail until Pages is enabled.
 
+## Use the action in another workflow
 
-To use this Action, add it to your workflow file. And change the path to your disired files and the selector in the html
+After checking out the destination branch on an Ubuntu runner, add this step and give the job `contents: write`:
 
 ```yaml
-name: Test Bookmarklet Generator
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'raw_js_file.js'
-
-jobs:
-  bookmarklet-job:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Use Bookmarklet Generator Action
-        uses: ulrischa/js_to_bookmarklet_action@v1
-        with:
-          source_js_file: 'raw_js_file.js'
-          target_html_file: 'install_page.htm'
-          target_element_id: 'target'
-          commit_message: 'Update bookmarklet link'
-
-      - name: Debug Files and Environment
-        run: |
-          ls -la .
-          cat raw_js_file.js
-          cat install_page.htm
-        shell: bash
-
+- uses: ulrischa/js_to_bookmarklet_action@main
+  with:
+    source_js_file: src/bookmarklet.js
+    target_html_file: index.htm
+    target_element_id: target
 ```
-## Automatically publish as github page
-If you wish to automatically publish the html page as github page and use it as a install page, activate github pages:
 
-Configure your repo as hosting for github pages. So your target html file can be reached online. Use Github Actions for this
-
-![pages](https://github.com/user-attachments/assets/acc98043-f189-4e5a-8a85-11871cf73bd4)
-
-Then you must change the git hub pages static.yaml action file, so that it runs after the bookmarklet conversion. Let's say you named the bookmarklet conversion action "Test Bookmarklet Generator". Then cnage the on trigger to:
-```yaml
-on:
-  workflow_run:
-    workflows:
-      - Test Bookmarklet Generator
-    types:
-      - completed
-
-You shoud change your static
+For reproducible builds, pin the action to a reviewed commit. The existing v1 release predates automatic page creation. The action defaults to `index.html` when the target path is omitted.

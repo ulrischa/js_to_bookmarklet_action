@@ -1,0 +1,36 @@
+name: Build bookmarklet
+on:
+  push:
+  workflow_dispatch:
+concurrency:
+  group: bookmarklet-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: ./
+        with:
+          target_html_file: index.htm
+      - run: mkdir -p "$RUNNER_TEMP/site" && cp index.htm "$RUNNER_TEMP/site/index.html"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - id: publish
+        uses: actions/deploy-pages@v4

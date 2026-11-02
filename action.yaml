@@ -1,115 +1,39 @@
-name: "Bookmarklet Generator"
-description: "Automatically generates a JavaScript bookmarklet and updates an HTML file with the bookmarklet link."
-author: "Your Name or Organization"
+name: Bookmarklet Generator
+description: Generate an install page or update a bookmarklet link on an existing page.
 branding:
-  color: "blue"
-  icon: "link"
-
-
+  color: blue
+  icon: link
 inputs:
   source_js_file:
-    description: "Path to the source JavaScript file used for creating the bookmarklet."
-    required: false
-    default: "src/bookmarklet.js"
+    description: JavaScript source file
+    default: src/bookmarklet.js
   target_html_file:
-    description: "Path to the target HTML file where the bookmarklet link will be updated."
-    required: false
-    default: "index.html"
+    description: Install page to create or update
+    default: index.html
   target_element_id:
-    description: "ID of the link element in the target HTML file."
-    required: false
-    default: "target"
+    description: Install link ID
+    default: target
   commit_message:
-    description: "Git commit message for the updated HTML file."
-    required: false
-    default: "Update bookmarklet link"
-
+    description: Commit message for a changed page
+    default: Update bookmarklet link
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - name: Check if source file exists
+    - shell: bash
+      env:
+        SOURCE_FILE: ${{ inputs.source_js_file }}
+        TARGET_FILE: ${{ inputs.target_html_file }}
+        TARGET_ID: ${{ inputs.target_element_id }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
       run: |
-        if [ ! -f "${{ inputs.source_js_file }}" ]; then
-          echo "Source file not found: ${{ inputs.source_js_file }}"
-          exit 1
+        work=$(mktemp -d)
+        trap 'rm -rf "$work"' EXIT
+        # The wrapper supports both plain scripts and existing IIFEs.
+        { printf '(function(){\n'; cat -- "$SOURCE_FILE"; printf '\n})();\n'; } > "$work/input.js"
+        npm exec --yes --package=uglify-js@3.19.3 -- uglifyjs "$work/input.js" -c -m -o "$work/min.js"
+        python3 "$GITHUB_ACTION_PATH/scripts/generate.py" "$work/min.js"
+        git add -- "$TARGET_FILE"
+        if ! git diff --cached --quiet -- "$TARGET_FILE"; then
+          git -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' commit -m "$COMMIT_MESSAGE" -- "$TARGET_FILE"
+          git push
         fi
-      shell: bash
-
-    - name: Check if target file exists
-      run: |
-        if [ ! -f "${{ inputs.target_html_file }}" ]; then
-          echo "Target HTML file not found: ${{ inputs.target_html_file }}"
-          exit 1
-        fi
-      shell: bash
-
-    - name: Install UglifyJS
-      run: |
-        npm install uglify-js
-      shell: bash
-
-    - name: Execute Node.js script to generate bookmarklet
-      run: |
-        node << 'EOF'
-          const fs = require('fs');
-          const uglifyJS = require('uglify-js');
-          const sourceFile = "${{ inputs.source_js_file }}";
-          const targetFile = "${{ inputs.target_html_file }}";
-          const targetElementId = "${{ inputs.target_element_id }}";
-
-          try {
-            // Read and prepare the JS content
-            const jsContent = fs.readFileSync(sourceFile, 'utf-8').trim();
-            let processedCode = jsContent;
-            if (!processedCode.startsWith('(function') && !processedCode.startsWith('(() =>')) {
-              processedCode = `(function(){${processedCode}})();`;
-            }
-
-            // Minify code
-            const minified = uglifyJS.minify(processedCode, {
-              compress: true,
-              mangle: true
-            });
-
-            if (minified.error) {
-              console.error("UglifyJS error:", minified.error);
-              process.exit(1);
-            }
-
-            let singleLineCode = minified.code;
-            // Remove any extraneous newlines
-            singleLineCode = singleLineCode.replace(/\r?\n/g, ' ');
-
-            // Escape characters that break HTML attributes
-            singleLineCode = singleLineCode
-              .replace(/&/g, '&amp;')
-              .replace(/"/g, '&quot;')
-              .replace(/</g, '&lt;')
-              .replace(/#/g, '%23')
-              .replace(/>/g, '&gt;');
-
-            const bookmarklet = 'javascript:' + singleLineCode;
-
-            const html = fs.readFileSync(targetFile, 'utf-8');
-
-            // Replace the href attribute of the link with the generated bookmarklet
-            const regex = new RegExp(`(<a[^>]*id="${targetElementId}"[^>]*href=")[^"]*(")`, 'i');
-            const updatedHtml = html.replace(regex, `$1${bookmarklet}$2`);
-
-            fs.writeFileSync(targetFile, updatedHtml, 'utf-8');
-            console.log(`Bookmarklet successfully created and added to ${targetFile}.`);
-          } catch (error) {
-            console.error('Error processing files:', error);
-            process.exit(1);
-          }
-        EOF
-      shell: bash
-
-    - name: Commit and Push Changes
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add "${{ inputs.target_html_file }}"
-        git diff-index --quiet HEAD || git commit -m "${{ inputs.commit_message }}"
-        git push
-      shell: bash
