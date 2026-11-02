@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: read
+    outputs:
+      publish: ${{ steps.pages.outputs.publish }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -18,12 +21,30 @@ jobs:
       - uses: ./
         with:
           target_html_file: index.htm
-      - run: mkdir -p "$RUNNER_TEMP/site" && cp index.htm "$RUNNER_TEMP/site/index.html"
-      - uses: actions/upload-pages-artifact@v3
+      - name: Check Pages configuration
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          enabled=$(gh api "repos/$GITHUB_REPOSITORY" --jq '.has_pages')
+          publish=false
+          if [[ "$enabled" == true ]]; then
+            mode=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.build_type')
+            [[ "$mode" != workflow ]] || publish=true
+          fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          if [[ "$publish" == false ]]; then
+            echo 'Install page built. To publish it, select Settings → Pages → Source → GitHub Actions, then rerun Build bookmarklet. No additional workflow is needed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - if: steps.pages.outputs.publish == 'true'
+        run: mkdir -p "$RUNNER_TEMP/site" && cp index.htm "$RUNNER_TEMP/site/index.html"
+      - if: steps.pages.outputs.publish == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/site
   deploy:
     needs: build
+    if: needs.build.outputs.publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
