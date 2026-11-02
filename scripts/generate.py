@@ -60,8 +60,14 @@ def generate(page_path, repo, target, code):
         raise ValueError(f'Expected one link with id {target!r}, found {len(matches)}.')
     start, end = matches[0]
     url = 'javascript:' + quote(code, safe="!()*-._~")
+    page = page[:start] + f'href="{url}"' + page[end:]
+    if not re.search(r'<summary\b[^>]*>\s*How to install a bookmarklet\s*</summary>', page, re.I):
+        guide = Path(__file__).with_name('installation.html').read_text(encoding='utf-8').strip()
+        closing = re.search(r'</body\s*>|</html\s*>', page, re.I)
+        position = closing.start() if closing else len(page)
+        page = page[:position] + '\n' + guide + '\n' + page[position:]
     page_path.parent.mkdir(parents=True, exist_ok=True)
-    page_path.write_text(page[:start] + f'href="{url}"' + page[end:], encoding='utf-8')
+    page_path.write_text(page, encoding='utf-8')
 
 
 if __name__ == '__main__':
